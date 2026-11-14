@@ -1,6 +1,15 @@
 from fastapi import APIRouter
 
-from app.routers import batches, buffer, dashboard, events, projections, settings, streams
+from app.routers import (
+    batches,
+    buffer,
+    dashboard,
+    events,
+    projections,
+    replays,
+    settings,
+    streams,
+)
 
 api = APIRouter(prefix="/api")
 api.include_router(dashboard.router)
@@ -10,3 +19,4 @@ api.include_router(projections.router)
 api.include_router(events.router)
 api.include_router(buffer.router)
 api.include_router(settings.router)
+api.include_router(replays.router)

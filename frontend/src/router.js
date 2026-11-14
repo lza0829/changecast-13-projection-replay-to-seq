@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Dashboard from './pages/Dashboard.vue'
 import Streams from './pages/Streams.vue'
 import Run from './pages/Run.vue'
+import Replay from './pages/Replay.vue'
 import Projections from './pages/Projections.vue'
 import Batches from './pages/Batches.vue'
 import Events from './pages/Events.vue'
@@ -14,6 +15,7 @@ export default createRouter({
     { path: '/', component: Dashboard },
     { path: '/streams', component: Streams },
     { path: '/run', component: Run },
+    { path: '/replay', component: Replay },
     { path: '/projections', component: Projections },
     { path: '/batches', component: Batches },
     { path: '/events', component: Events },

@@ -117,6 +117,81 @@ def init_db() -> None:
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS stream_locks(
+                stream_id INTEGER PRIMARY KEY,
+                operation TEXT NOT NULL,
+                holder_ref TEXT NOT NULL,
+                acquired_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                FOREIGN KEY(stream_id) REFERENCES project_streams(id)
+            );
+            CREATE TABLE IF NOT EXISTS replay_runs(
+                id INTEGER PRIMARY KEY,
+                replay_no TEXT NOT NULL UNIQUE,
+                stream_id INTEGER NOT NULL,
+                target_seq INTEGER NOT NULL,
+                status TEXT NOT NULL,
+                source_event_count INTEGER NOT NULL,
+                source_max_seq INTEGER NOT NULL,
+                source_truncated INTEGER NOT NULL,
+                batch_count INTEGER NOT NULL,
+                batch_size INTEGER NOT NULL,
+                rows_total INTEGER NOT NULL,
+                rows_alive INTEGER NOT NULL,
+                rows_deleted INTEGER NOT NULL,
+                snapshot_max_seq INTEGER NOT NULL,
+                checks_json TEXT,
+                error TEXT,
+                promoted_at TEXT,
+                promoted_batch_id INTEGER,
+                created_at TEXT NOT NULL,
+                finished_at TEXT,
+                FOREIGN KEY(stream_id) REFERENCES project_streams(id)
+            );
+            CREATE TABLE IF NOT EXISTS replay_batches(
+                id INTEGER PRIMARY KEY,
+                replay_id INTEGER NOT NULL,
+                batch_index INTEGER NOT NULL,
+                seq_from INTEGER NOT NULL,
+                seq_to INTEGER NOT NULL,
+                source_events INTEGER NOT NULL,
+                applied_upsert INTEGER NOT NULL,
+                applied_delete INTEGER NOT NULL,
+                skipped_duplicate INTEGER NOT NULL,
+                projected_alive INTEGER NOT NULL,
+                projected_deleted INTEGER NOT NULL,
+                max_seq INTEGER NOT NULL,
+                UNIQUE(replay_id, batch_index),
+                FOREIGN KEY(replay_id) REFERENCES replay_runs(id)
+            );
+            CREATE TABLE IF NOT EXISTS replay_projection_rows(
+                id INTEGER PRIMARY KEY,
+                replay_id INTEGER NOT NULL,
+                stream_id INTEGER NOT NULL,
+                entity_key TEXT NOT NULL,
+                payload_json TEXT,
+                applied_seq INTEGER NOT NULL,
+                applied_event_id TEXT NOT NULL,
+                deleted INTEGER NOT NULL DEFAULT 0,
+                UNIQUE(replay_id, entity_key),
+                FOREIGN KEY(replay_id) REFERENCES replay_runs(id),
+                FOREIGN KEY(stream_id) REFERENCES project_streams(id)
+            );
+            CREATE TABLE IF NOT EXISTS replay_applied_events(
+                id INTEGER PRIMARY KEY,
+                replay_id INTEGER NOT NULL,
+                replay_batch_id INTEGER NOT NULL,
+                stream_id INTEGER NOT NULL,
+                event_id TEXT NOT NULL,
+                entity_key TEXT NOT NULL,
+                op TEXT NOT NULL,
+                seq INTEGER NOT NULL,
+                event_time TEXT NOT NULL,
+                result TEXT NOT NULL,
+                FOREIGN KEY(replay_id) REFERENCES replay_runs(id),
+                FOREIGN KEY(replay_batch_id) REFERENCES replay_batches(id),
+                FOREIGN KEY(stream_id) REFERENCES project_streams(id)
+            );
             """
         )
         if conn.execute("SELECT COUNT(*) c FROM project_streams").fetchone()["c"] == 0:

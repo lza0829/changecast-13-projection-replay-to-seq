@@ -6,6 +6,7 @@ const streams = ref([])
 const batches = ref([])
 const streamId = ref(null)
 const note = ref('')
+const holdSeconds = ref(0)
 const last = ref(null)
 const busy = ref(false)
 const err = ref('')
@@ -20,13 +21,31 @@ async function run() {
   err.value = ''
   busy.value = true
   try {
-    last.value = await postJSON('/api/project', { stream_id: Number(streamId.value), note: note.value || null })
+    last.value = await postJSON('/api/project', {
+      stream_id: Number(streamId.value),
+      note: note.value || null,
+      hold_seconds: Number(holdSeconds.value || 0),
+    })
     await refresh()
   } catch (e) {
-    err.value = String(e.message || e)
+    err.value = explainLock(e)
   } finally {
     busy.value = false
   }
+}
+
+function explainLock(e) {
+  try {
+    const parsed = JSON.parse(String(e.message || '').replace(/^Error: /, ''))
+    if (parsed?.detail?.error === 'stream_locked') {
+      const h = parsed.detail.holder
+      return `409 互斥：该流正被 ${h.operation}（${h.holder_ref}）占用，常规开跑与 seq 重放/提升同流互斥，已拒绝本次开跑。`
+    }
+    if (parsed?.detail) return typeof parsed.detail === 'string' ? parsed.detail : JSON.stringify(parsed.detail)
+  } catch {
+    /* fall through */
+  }
+  return String(e.message || e)
 }
 
 onMounted(async () => {
@@ -52,8 +71,16 @@ onMounted(async () => {
           备注（可选）
           <input v-model="note" style="display:block;width:16rem;margin-top:0.25rem" placeholder="本趟说明" />
         </label>
+        <label>
+          持锁秒数（互斥演示）
+          <input v-model.number="holdSeconds" type="number" min="0" max="10" step="0.5" style="display:block;width:9rem;margin-top:0.25rem" />
+        </label>
         <button :disabled="busy || !streamId" @click="run">{{ busy ? '投影中…' : '应用变更流' }}</button>
       </div>
+      <p class="muted" style="margin-bottom:0">
+        持锁秒数 &gt; 0 时，开跑写主投影期间会占住按流锁；此时去「seq 重放」对同流发起重放将收到 409。
+        常规开跑与重放/提升同流互斥，不同流互不阻塞。
+      </p>
     </div>
 
     <div class="panel" v-if="last">

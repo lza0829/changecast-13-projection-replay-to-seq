@@ -12,6 +12,7 @@
         <router-link to="/">总览</router-link>
         <router-link to="/streams">投影流</router-link>
         <router-link to="/run">投影台</router-link>
+        <router-link to="/replay">seq 重放</router-link>
         <router-link to="/projections">投影快照</router-link>
         <router-link to="/batches">应用批次</router-link>
         <router-link to="/events">事件留痕</router-link>

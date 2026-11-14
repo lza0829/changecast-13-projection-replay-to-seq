@@ -20,9 +20,16 @@ onMounted(async () => {
         <div class="stat"><div class="stat-num">{{ stats.projection_alive }}</div><div class="stat-label">存活投影</div></div>
         <div class="stat"><div class="stat-num">{{ stats.projection_deleted }}</div><div class="stat-label">已删投影</div></div>
         <div class="stat"><div class="stat-num">{{ stats.ooo_buffered }}</div><div class="stat-label">缓冲中</div></div>
+        <div class="stat"><div class="stat-num">{{ stats.replay_count }}</div><div class="stat-label">seq 重放</div></div>
+        <div class="stat"><div class="stat-num">{{ stats.replay_failed }}</div><div class="stat-label">重放失败</div></div>
+        <div class="stat"><div class="stat-num">{{ stats.locked_streams }}</div><div class="stat-label">持锁流</div></div>
       </div>
       <p style="margin-top:1rem">默认应用序 <span class="tag">{{ stats.apply_order }}</span>（按事件 seq 升序）</p>
-      <p><router-link to="/run">去投影台跑一趟 →</router-link></p>
+      <p>
+        <router-link to="/run">去投影台跑一趟 →</router-link>
+        ·
+        <router-link to="/replay">按目标 seq 重放（隔离快照）→</router-link>
+      </p>
     </div>
   </div>
 </template>
